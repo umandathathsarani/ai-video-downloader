@@ -9,21 +9,39 @@ st.set_page_config(
     page_title="Video Processing Hub", 
     page_icon="🎬", 
     layout="wide", 
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded" 
 )
 
+with st.sidebar:
+    st.header("⚙️ System Settings")
+    st.markdown("Control your network and database connections.")
+    
+    operation_mode = st.radio(
+        "Operation Mode",
+        ["Online (Cloud Sync)", "Offline (Local Only)"],
+        help="Offline mode completely disables MongoDB connections to prevent network timeouts."
+    )
+
 @st.cache_resource
-def init_db():
-    """Connects to MongoDB once and caches the connection for app speed."""
+def init_db(mode):
+    """Initializes the database based on the selected mode."""
     db = VideoDatabase()
-    try:
+    if mode == "Online (Cloud Sync)":
         db.connect()
-    except Exception as e:
-        st.toast("⚠️ Network blocking database. Running in Offline Mode.")
-        print(f"Database connection failed: {e}")
+    else:
+        db.collection = None
     return db
 
-db = init_db()
+db = init_db(operation_mode)
+
+with st.sidebar:
+    st.divider()
+    if operation_mode == "Offline (Local Only)":
+        st.warning("🔌 Running Offline. Cloud sync is disabled.")
+    elif db.collection is None:
+        st.error("⚠️ Network Blocked. Forced into Offline Mode.")
+    else:
+        st.success("🌐 Connected to MongoDB Atlas.")
 
 st.title("🎬 Video Processing Hub")
 st.markdown("Download media, extract audio tracks, and manage your AI-ready datasets.")
@@ -74,12 +92,15 @@ with tab_process:
                                 st.write(f"✅ Audio extracted: `{os.path.basename(saved_audio_path)}`")
                         
                         if db.collection is not None:
-                            st.write("☁️ Logging to database...")
+                            st.write("☁️ Syncing to MongoDB...")
                             title = os.path.splitext(os.path.basename(saved_video_path))[0]
                             db.log_video(video_url, title, saved_video_path, saved_audio_path)
-                                
-                        status.update(label="Processing Complete!", state="complete", expanded=False)
-                        st.success("Your files are ready and logged to the database!")
+                            status.update(label="Processing & Sync Complete!", state="complete", expanded=False)
+                            st.success("Files ready and synced to the cloud!")
+                        else:
+                            status.update(label="Processing Complete (Offline)", state="complete", expanded=False)
+                            st.success("Files saved locally. (Cloud sync disabled)")
+                            
                     else:
                         status.update(label="Download Failed", state="error", expanded=True)
                         st.error("Failed to download the media. Please verify the URL and your network connection.")
@@ -90,32 +111,35 @@ with tab_process:
 
 with tab_database:
     st.subheader("Cloud Data Archive")
-    st.markdown("View and manage all media records synced to MongoDB Atlas.")
-    
-    col_refresh, col_empty = st.columns([1, 5])
-    with col_refresh:
-        refresh = st.button("🔄 Refresh Data")
-    
-    videos_data = db.get_all_videos()
-    
-    if not videos_data:
-        st.info("No records found in the database. Process a video to start building your dataset.")
-    else:
-        df = pd.DataFrame(videos_data)
-    
-        if "_id" in df.columns:
-            df = df.drop(columns=["_id"]) 
 
-        st.dataframe(
-            df,
-            use_container_width=True,
-            column_config={
-                "original_url": st.column_config.LinkColumn("Source URL"),
-                "title": "Media Title",
-                "status": "Pipeline Status",
-                "video_file_path": "Local Video Path",
-                "audio_file_path": "Local Audio Path",
-                "transcript": "AI Transcript"
-            },
-            hide_index=True
-        )
+    if operation_mode == "Offline (Local Only)" or db.collection is None:
+        st.warning("🔌 The Cloud Data Archive is currently unavailable because the system is in Offline Mode.")
+    else:
+        st.markdown("View and manage all media records synced to MongoDB Atlas.")
+        
+        col_refresh, col_empty = st.columns([1, 5])
+        with col_refresh:
+            refresh = st.button("🔄 Refresh Data")
+        
+        videos_data = db.get_all_videos()
+        
+        if not videos_data:
+            st.info("No records found in the database. Process a video to start building your dataset.")
+        else:
+            df = pd.DataFrame(videos_data)
+            if "_id" in df.columns:
+                df = df.drop(columns=["_id"])
+                
+            st.dataframe(
+                df,
+                use_container_width=True,
+                column_config={
+                    "original_url": st.column_config.LinkColumn("Source URL"),
+                    "title": "Media Title",
+                    "status": "Pipeline Status",
+                    "video_file_path": "Local Video Path",
+                    "audio_file_path": "Local Audio Path",
+                    "transcript": "AI Transcript"
+                },
+                hide_index=True
+            )
