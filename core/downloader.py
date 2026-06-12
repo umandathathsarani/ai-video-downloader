@@ -6,10 +6,15 @@ def download_video(url, output_dir="downloads"):
         os.makedirs(output_dir)
 
     ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
-        'quiet': False,
-    }
+           'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+           'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+           'quiet': False,
+
+           'retries': 10, 
+           'fragment_retries': 10, 
+           'extractor_retries': 3,
+           'nocheckcertificate': True, 
+       }
 
     print(f"Starting download for: {url}")
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
