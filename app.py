@@ -16,7 +16,11 @@ st.set_page_config(
 def init_db():
     """Connects to MongoDB once and caches the connection for app speed."""
     db = VideoDatabase()
-    db.connect()
+    try:
+        db.connect()
+    except Exception as e:
+        st.toast("⚠️ Network blocking database. Running in Offline Mode.")
+        print(f"Database connection failed: {e}")
     return db
 
 db = init_db()
