@@ -45,12 +45,12 @@ class VideoDatabase:
             print(f"Video logged to database with ID: {result.inserted_id}")
             return result.inserted_id
         return None
-    
-def get_all_videos(self):
+
+    def get_all_videos(self):
         """Fetches all video records from MongoDB, sorted by newest first."""
         if self.collection is not None:
             videos = list(self.collection.find().sort("_id", -1))
-            
+
             for video in videos:
                 video["_id"] = str(video["_id"])
             return videos
