@@ -3,3 +3,5 @@ moviepy
 pymongo
 python-dotenv
 openai-whisper
+streamlit
+certifi
