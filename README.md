@@ -14,7 +14,7 @@ Built with a focus on fault tolerance, the hub intelligently bypasses common net
 
 Seamlessly download high-quality video content using a custom-configured **yt-dlp** engine.
 
-### 🎧 AI-Ready Audio Extraction
+### 🎵 AI-Ready Audio Extraction
 
 Automatically strip and format MP3 audio tracks using **moviepy**, optimizing files for Speech-to-Text models like **OpenAI Whisper**.
 
@@ -34,7 +34,7 @@ A clean, responsive single-page web dashboard built with **Streamlit** for easy 
 
 ## Tech Stack
 
-| Component        | Technology                       |
+| Layer            | Technology                       |
 | ---------------- | -------------------------------- |
 | Frontend         | Streamlit                        |
 | Backend          | Python 3                         |
@@ -44,21 +44,23 @@ A clean, responsive single-page web dashboard built with **Streamlit** for easy 
 
 ---
 
-## Prerequisites
+## Project Structure
 
-Before running the application, ensure you have the following installed on your system:
-
-* Python 3.8+ (Tested on Python 3.11)
-* FFmpeg (Required for audio extraction and Whisper transcription)
-* MongoDB Atlas account and cluster
+```plaintext
+ai-video-downloader/
+├── app.py             # Main Streamlit dashboard
+├── core/              # Downloader logic
+├── database/          # MongoDB client and schemas
+├── pipeline/          # Audio processing modules
+├── .env               # Environment variables
+└── requirements.txt   # Project dependencies
+```
 
 ---
 
 ## Installation & Setup
 
 ### 1. Clone the Repository
-
-Open your terminal and navigate to your desired workspace, then clone the project:
 
 ```bash
 git clone https://github.com/umandathathsarani/ai-video-downloader.git
@@ -67,15 +69,13 @@ cd ai-video-downloader
 
 ### 2. Install Python Dependencies
 
-Ensure your environment is set up with the required libraries:
-
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the root directory of the project and add your secure MongoDB connection string:
+Create a `.env` file in the root directory and add your MongoDB connection string:
 
 ```env
 MONGO_URI="mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority"
@@ -85,66 +85,73 @@ MONGO_URI="mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites
 
 ## Usage
 
-### Launching the Dashboard
-
-To start the application, run the following command in your terminal:
+### Launch the Dashboard
 
 ```bash
 streamlit run app.py
 ```
 
-This will initialize the local server and open the web dashboard in your default browser.
-
-### Using the Pipeline
+### Processing a Video
 
 1. Copy a valid video URL from a supported platform.
-2. Paste the URL into the **Media URL** input field on the dashboard.
-3. Toggle **Extract Audio (MP3)** depending on your dataset requirements.
+2. Paste the URL into the **Media URL** field.
+3. Toggle **Extract Audio (MP3)** if required.
 4. Click **Process Video**.
-5. The system will securely download the highest quality format, extract the requested files, and save them to the local `/downloads` directory while syncing metadata to the cloud.
+5. The system will download, process, and store the media while syncing metadata to MongoDB Atlas when online.
 
 ---
 
-## System Architecture Notes
+## Troubleshooting
 
-### Strict Network Environments
+### SSL Handshake Errors
 
-If you are running this tool on a restricted network (e.g., a university campus), the system may fail the initial SSL handshake with MongoDB. The application will detect this `ServerSelectionTimeoutError` and automatically boot into **Offline Mode**.
+If running on a restricted network, ensure your `certifi` package is updated.
 
-In Offline Mode:
+The system will automatically detect blocked MongoDB connections and enter **Offline Mode**, allowing local downloads and processing to continue without interruption.
 
-* ✅ Videos are downloaded successfully.
-* ✅ Audio extraction continues normally.
-* ✅ Local file storage remains fully functional.
-* ⚠️ Cloud synchronization is temporarily paused until connectivity is restored.
+### JavaScript Runtime Issues
 
-This ensures uninterrupted dataset collection and preprocessing regardless of network restrictions.
+If **yt-dlp** reports a missing JavaScript runtime, install **Deno** to ensure uninterrupted video extraction and metadata processing.
 
 ---
 
-## Project Structure
+## Roadmap & Future Improvements
 
-```text
-ai-video-downloader/
-│
-├── app.py
-├── requirements.txt
-├── .env
-├── downloads/
-│   ├── videos/
-│   └── audio/
-│
-├── services/
-│   ├── downloader.py
-│   ├── audio_extractor.py
-│   ├── database.py
-│   └── whisper_processor.py
-│
-└── README.md
-```
+### Phase 2
+
+Integrate **OpenAI Whisper** for automatic, high-accuracy transcript generation directly within the dashboard.
+
+### Phase 3
+
+Add batch processing support to allow users to ingest large lists of URLs in a single processing queue.
+
+### Phase 4
+
+Introduce Docker containerization to simplify deployment across Windows, Linux, and macOS environments.
 
 ---
 
-## License
+## Credits & Acknowledgments
 
-This project is intended for educational, research, and AI dataset preparation purposes. Ensure compliance with the terms of service of the platforms from which content is downloaded.
+This project utilizes the power of open-source software. Special thanks to the maintainers of:
+
+* **yt-dlp** for advanced video extraction.
+* **Streamlit** for enabling rapid UI development.
+* **moviepy** for robust media manipulation.
+* **pymongo** for seamless cloud database integration.
+
+---
+
+## Copyright & Usage Notice
+
+**© 2026 Mummullage Binuri Umanda Thathsarani. All rights reserved.**
+
+This source code and the accompanying documentation are the intellectual property of the author. Unauthorized copying, distribution, modification, or reproduction of this content, in whole or in part, without explicit written permission from the owner is strictly prohibited.
+
+For inquiries regarding licensing, collaboration, or usage permissions, please contact the author directly.
+
+---
+
+## Disclaimer
+
+This tool is intended for educational, research, and AI dataset preparation purposes. Users are responsible for ensuring compliance with the Terms of Service, copyright regulations, and content usage policies of any platforms from which media is downloaded.
