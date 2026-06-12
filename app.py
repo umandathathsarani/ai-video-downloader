@@ -8,39 +8,17 @@ st.set_page_config(
     page_title="Video Processing Hub", 
     page_icon="🎬", 
     layout="wide", 
-    initial_sidebar_state="expanded" 
+    initial_sidebar_state="collapsed" 
 )
 
-with st.sidebar:
-    st.header("⚙️ System Settings")
-    st.markdown("Control your network and database connections.")
-    
-    operation_mode = st.radio(
-        "Operation Mode",
-        ["Online (Cloud Sync)", "Offline (Local Only)"],
-        help="Offline mode completely disables MongoDB connections to prevent network timeouts."
-    )
-
 @st.cache_resource
-def init_db(mode):
-    """Initializes the database based on the selected mode."""
+def init_db():
+    """Initializes the database. Network failures are handled silently in the backend."""
     db = VideoDatabase()
-    if mode == "Online (Cloud Sync)":
-        db.connect()
-    else:
-        db.collection = None
+    db.connect()
     return db
 
-db = init_db(operation_mode)
-
-with st.sidebar:
-    st.divider()
-    if operation_mode == "Offline (Local Only)":
-        st.warning("🔌 Running Offline. Cloud sync is disabled.")
-    elif db.collection is None:
-        st.error("⚠️ Network Blocked. Forced into Offline Mode.")
-    else:
-        st.success("🌐 Connected to MongoDB Atlas.")
+db = init_db()
 
 st.title("🎬 Video Processing Hub")
 st.markdown("Download media, extract audio tracks, and manage your AI-ready datasets.")
@@ -86,7 +64,7 @@ if process_btn:
                         saved_audio_path = extract_audio(saved_video_path)
                         if saved_audio_path and os.path.exists(saved_audio_path):
                             st.write(f"✅ Audio extracted: `{os.path.basename(saved_audio_path)}`")
-  
+ 
                     if db.collection is not None:
                         st.write("☁️ Syncing to MongoDB...")
                         title = os.path.splitext(os.path.basename(saved_video_path))[0]
@@ -94,8 +72,8 @@ if process_btn:
                         status.update(label="Processing & Sync Complete!", state="complete", expanded=False)
                         st.success("Files ready and synced to the cloud!")
                     else:
-                        status.update(label="Processing Complete (Offline)", state="complete", expanded=False)
-                        st.success("Files saved locally. (Cloud sync disabled)")
+                        status.update(label="Processing Complete", state="complete", expanded=False)
+                        st.success("Files successfully saved to your local directory!")
                         
                 else:
                     status.update(label="Download Failed", state="error", expanded=True)
