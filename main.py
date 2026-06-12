@@ -3,6 +3,7 @@ import argparse
 from core.downloader import download_video
 from pipeline.processor import extract_audio
 from database.mongo_client import VideoDatabase
+from pipeline.transcriber import transcribe_audio
 
 def process_video(url, db, db_connected, extract_audio_flag=False):
     """Handles the full pipeline for a single video URL."""
@@ -12,10 +13,18 @@ def process_video(url, db, db_connected, extract_audio_flag=False):
         print(f"Success! Video saved to: {saved_video_path}")
         
         saved_audio_path = None
+        transcript_text = None
+        
         if extract_audio_flag:
             saved_audio_path = extract_audio(saved_video_path)
             if saved_audio_path:
                 print(f"Success! Audio extracted to: {saved_audio_path}")
+
+                user_choice = input("Run AI transcription on this audio? (y/n): ").lower()
+                if user_choice == 'y':
+                    transcript_text = transcribe_audio(saved_audio_path)
+                    if transcript_text:
+                        print(f"\nTranscription Preview: {transcript_text[:150]}...\n")
                 
         if db_connected:
             video_title = os.path.splitext(os.path.basename(saved_video_path))[0]
@@ -24,7 +33,8 @@ def process_video(url, db, db_connected, extract_audio_flag=False):
                 url=url, 
                 title=video_title, 
                 video_path=saved_video_path, 
-                audio_path=saved_audio_path
+                audio_path=saved_audio_path,
+                transcript=transcript_text 
             )
     except Exception as e:
         print(f"Failed to process {url}. Error: {e}")

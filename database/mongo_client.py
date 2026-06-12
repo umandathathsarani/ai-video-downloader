@@ -1,4 +1,5 @@
 import os
+import certifi
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from dotenv import load_dotenv
@@ -14,7 +15,7 @@ class VideoDatabase:
 
     def connect(self):
         try:
-            self.client = MongoClient(self.uri)
+            self.client = MongoClient(self.uri, tlsCAFile=certifi.where())
             self.db = self.client.ai_video_dataset
             self.collection = self.db.videos
             print("Successfully connected to MongoDB Atlas!")
@@ -23,15 +24,22 @@ class VideoDatabase:
             print(f"Could not connect to MongoDB: {e}")
             return False
 
-    def log_video(self, url, title, video_path, audio_path=None):
-        """Inserts a record of the downloaded video into the database."""
+    def log_video(self, url, title, video_path, audio_path=None, transcript=None):
         if not self.collection is None:
+            if transcript:
+                status = "Transcribed"
+            elif audio_path:
+                status = "Audio Extracted"
+            else:
+                status = "Downloaded"
+
             video_document = {
                 "original_url": url,
                 "title": title,
                 "video_file_path": video_path,
                 "audio_file_path": audio_path,
-                "status": "Processed" if audio_path else "Downloaded"
+                "transcript": transcript,
+                "status": status
             }
             result = self.collection.insert_one(video_document)
             print(f"Video logged to database with ID: {result.inserted_id}")
